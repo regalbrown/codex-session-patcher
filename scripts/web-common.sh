@@ -114,7 +114,7 @@ web_state_dir() {
         if [ -n "$git_dir" ]; then
             git_dir="${git_dir%$'\r'}"
             case "$git_dir" in
-                /*) ;;
+                /*|[A-Za-z]:/*|[A-Za-z]:\\*) ;;
                 *) git_dir="$PROJECT_DIR/$git_dir" ;;
             esac
             printf '%s\n' "$git_dir/web-runtime"

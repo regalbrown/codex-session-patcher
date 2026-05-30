@@ -977,3 +977,25 @@ def test_web_state_dir_trims_carriage_return_from_worktree_gitdir(tmp_path: Path
 
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == str(git_dir / "web-runtime")
+
+
+def test_web_state_dir_treats_windows_drive_gitdir_as_absolute(tmp_path: Path):
+    project_dir = tmp_path / "project"
+    scripts_dir = project_dir / "scripts"
+    git_dir = "C:/Users/demo/repo/.git/worktrees/project"
+
+    scripts_dir.mkdir(parents=True)
+
+    shutil.copy2(REPO_ROOT / "scripts" / "web-common.sh", scripts_dir / "web-common.sh")
+    (project_dir / ".git").write_text(f"gitdir: {git_dir}\n", encoding="utf-8")
+
+    result = subprocess.run(
+        ["bash", "-c", "source scripts/web-common.sh && web_state_dir"],
+        cwd=project_dir,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == f"{git_dir}/web-runtime"
