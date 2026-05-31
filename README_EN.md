@@ -40,7 +40,7 @@ AI coding tools (Codex, Claude Code, OpenCode) frequently refuse security-relate
 - **Diff View** — Side-by-side before/after comparison
 
 ### CTF/Pentest Prompt Injection
-- **Codex Profile Mode** — Create a `ctf` profile, only active when launched with `codex -p ctf`, doesn't affect normal sessions
+- **Codex Profile Mode** — Create the new `ctf.config.toml` profile, only active when launched with `codex -p ctf`, doesn't affect normal sessions
 - **Codex Global Mode** — Inject into global config, automatically active for all new sessions
 - **Claude Code Workspace** — Create dedicated CTF workspace `~/.claude-ctf-workspace` with project-level CLAUDE.md injection
 - **OpenCode Workspace** — Create dedicated CTF workspace `~/.opencode-ctf-workspace` with AGENTS.md injection
@@ -189,6 +189,13 @@ codex-patcher --rewrite "Help me write a reverse analysis script"
 4. Resume
    codex resume
 ```
+
+The installer writes the new Codex profile file:
+
+- macOS/Linux: `~/.codex/ctf.config.toml`
+- Windows: `%USERPROFILE%\.codex\ctf.config.toml`
+
+To support Codex CLI 0.134.0 and newer, install removes legacy `profile = "ctf"`, `[profiles.ctf]`, and `[profiles.ctf.*]` entries from `config.toml`, preventing `codex -p ctf` from failing with a legacy profile error. Profile mode and global mode both use `developer_instructions` to append security-testing guidance without replacing Codex built-in instructions. Disabling global mode removes the marker and settings managed by this tool.
 
 ### Claude Code
 

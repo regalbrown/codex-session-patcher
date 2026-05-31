@@ -40,7 +40,7 @@
 - **Diff 对比** — 清理前后 Side-by-side 对比视图
 
 ### CTF/渗透测试提示词注入
-- **Codex Profile 模式** — 创建 `ctf` profile，仅 `codex -p ctf` 启动时生效，不影响正常会话
+- **Codex Profile 模式** — 创建新版 `ctf.config.toml` profile，仅 `codex -p ctf` 启动时生效，不影响正常会话
 - **Codex 全局模式** — 注入到全局配置，所有新会话自动生效
 - **Claude Code 工作空间** — 创建专用 CTF 工作空间 `~/.claude-ctf-workspace`，通过项目级 CLAUDE.md 注入
 - **OpenCode 工作空间** — 创建专用 CTF 工作空间 `~/.opencode-ctf-workspace`，通过 AGENTS.md 注入
@@ -189,6 +189,13 @@ codex-patcher --rewrite "帮我写一个逆向分析脚本"
 4. resume 继续
    codex resume
 ```
+
+安装器会写入新版 Codex profile 文件：
+
+- macOS/Linux: `~/.codex/ctf.config.toml`
+- Windows: `%USERPROFILE%\.codex\ctf.config.toml`
+
+为兼容 Codex CLI 0.134.0 及以后版本，安装时会从 `config.toml` 清理旧格式 `profile = "ctf"`、`[profiles.ctf]` 和 `[profiles.ctf.*]`，避免 `codex -p ctf` 启动时报 legacy profile 错误。Profile 模式和全局模式都使用 `developer_instructions` 追加安全测试规则，不替换 Codex 内置提示词；禁用全局模式会移除本工具写入的标记和配置。
 
 ### Claude Code
 

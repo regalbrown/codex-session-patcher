@@ -50,24 +50,34 @@ def check_ctf_status() -> CTFStatus:
     """
     # ── Codex 检查 ──
     codex_dir = os.path.expanduser("~/.codex")
-    config_path = os.path.join(codex_dir, "config.toml")
+    base_config_path = os.path.join(codex_dir, "config.toml")
+    profile_config_path = os.path.join(codex_dir, "ctf.config.toml")
 
     status = CTFStatus(
-        config_path=config_path,
+        config_path=profile_config_path,
         prompt_path=None,
     )
 
-    if os.path.exists(config_path):
-        status.config_exists = True
+    if os.path.exists(profile_config_path):
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(profile_config_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-                if '[profiles.ctf]' in content:
+            status.config_exists = True
+            if re.search(r'developer_instructions\s*=', content):
+                status.profile_available = True
+                status.prompt_exists = True
+            else:
+                match = re.search(r'model_instructions_file\s*=\s*"([^"]+)"', content)
+                if match:
                     status.profile_available = True
-                    # 从 [profiles.ctf] 提取实际指向的 prompt 文件路径
-                    match = re.search(r'model_instructions_file\s*=\s*"([^"]+)"', content)
-                    if match:
-                        status.prompt_path = os.path.expanduser(match.group(1))
+                    status.prompt_path = os.path.expanduser(match.group(1))
+        except Exception:
+            pass
+
+    if os.path.exists(base_config_path):
+        try:
+            with open(base_config_path, 'r', encoding='utf-8') as f:
+                content = f.read()
                 if GLOBAL_MARKER in content:
                     status.global_installed = True
         except Exception:

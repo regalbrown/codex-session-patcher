@@ -1229,10 +1229,91 @@ def _get_codex_prompt_path_for_file(filename: str) -> str:
     return os.path.join(os.path.expanduser("~/.codex/prompts"), os.path.basename(filename))
 
 
-def _sync_codex_profile_prompt_file(filename: str):
-    """同步 [profiles.ctf].model_instructions_file 到指定内置模板文件"""
+def _unescape_toml_basic_string(value: str) -> str:
+    """解码本工具写入的 TOML basic string 转义。"""
+    replacements = {
+        'b': '\b',
+        't': '\t',
+        'n': '\n',
+        'f': '\f',
+        'r': '\r',
+        '"': '"',
+        '\\': '\\',
+    }
+    result = []
+    index = 0
+    while index < len(value):
+        char = value[index]
+        if char == '\\' and index + 1 < len(value):
+            index += 1
+            result.append(replacements.get(value[index], value[index]))
+        else:
+            result.append(char)
+        index += 1
+    return ''.join(result)
+
+
+def _extract_developer_instructions(content: str) -> str | None:
+    """从 TOML 文本中读取 developer_instructions。"""
+    multiline = re.search(r'(?m)^\s*developer_instructions\s*=\s*"""', content)
+    if multiline:
+        start = multiline.end()
+        if content.startswith('\r\n', start):
+            start += 2
+        elif content.startswith('\n', start):
+            start += 1
+
+        index = start
+        raw = []
+        while index < len(content):
+            if content.startswith('"""', index):
+                return _unescape_toml_basic_string(''.join(raw)).rstrip('\n')
+            raw.append(content[index])
+            index += 1
+        return None
+
+    single_line = re.search(r'(?m)^\s*developer_instructions\s*=\s*"((?:\\.|[^"\\])*)"', content)
+    if single_line:
+        return _unescape_toml_basic_string(single_line.group(1))
+
+    return None
+
+
+def _read_codex_developer_instructions() -> str | None:
+    """读取 Codex 当前实际生效的 developer_instructions。"""
+    from codex_session_patcher.ctf_config import check_ctf_status
+    status = check_ctf_status()
+    codex_dir = os.path.expanduser("~/.codex")
+    paths = []
+    if status.profile_available:
+        paths.append(os.path.join(codex_dir, "ctf.config.toml"))
+    if status.global_installed:
+        paths.append(os.path.join(codex_dir, "config.toml"))
+
+    for path in paths:
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                value = _extract_developer_instructions(f.read())
+            if value is not None:
+                return value
+        except Exception:
+            logger.warning("读取 Codex developer_instructions 失败: %s", path, exc_info=True)
+
+    return None
+
+
+def _sync_codex_developer_instructions(prompt: str):
+    """同步已启用 Codex CTF 配置中的 developer_instructions。"""
     from codex_session_patcher.ctf_config import CTFConfigInstaller
-    CTFConfigInstaller()._update_config(os.path.basename(filename))
+    from codex_session_patcher.ctf_config import check_ctf_status
+    installer = CTFConfigInstaller()
+    status = check_ctf_status()
+    if status.profile_available:
+        installer._update_config(prompt)
+    if status.global_installed:
+        installer._update_global_config(prompt)
 
 
 def _codex_profile_available() -> bool:
@@ -1240,8 +1321,19 @@ def _codex_profile_available() -> bool:
     return check_ctf_status().profile_available
 
 
+def _codex_ctf_config_active() -> bool:
+    from codex_session_patcher.ctf_config import check_ctf_status
+    status = check_ctf_status()
+    return status.profile_available or status.global_installed
+
+
 def _read_ctf_prompt_for_tool(tool: str) -> str | None:
     """读取工具当前实际安装的 CTF 提示词，未安装时从配置中读取自定义内容，都没有则返回 None"""
+    if tool == 'codex':
+        prompt = _read_codex_developer_instructions()
+        if prompt is not None:
+            return prompt
+
     # 优先读已安装的实际文件
     path = _get_ctf_prompt_path(tool)
     if path and os.path.exists(path):
@@ -1272,6 +1364,15 @@ async def get_ctf_prompt(tool: str):
 
     prompt_path = _get_ctf_prompt_path(tool)
     default_prompt = _get_default_prompt(tool)
+    if tool == 'codex':
+        prompt = _read_codex_developer_instructions()
+        if prompt is not None:
+            return {
+                "prompt": prompt,
+                "is_installed": True,
+                "is_default": prompt.strip() == default_prompt.strip(),
+            }
+
     is_installed = bool(prompt_path and os.path.exists(prompt_path))
 
     # 已安装：读取实际文件
@@ -1319,10 +1420,10 @@ async def save_ctf_prompt(tool: str, body: dict):
             break
 
     should_write_installed = bool(prompt_path and os.path.exists(prompt_path))
-    if tool == 'codex' and _codex_profile_available():
+    if tool == 'codex' and _codex_ctf_config_active():
         if matched_file:
             prompt_path = _get_codex_prompt_path_for_file(matched_file)
-            _sync_codex_profile_prompt_file(matched_file)
+        _sync_codex_developer_instructions(prompt)
         should_write_installed = bool(prompt_path)
 
     # 已安装：写入对应文件
@@ -1356,10 +1457,10 @@ async def reset_ctf_prompt(tool: str):
     prompt_path = _get_ctf_prompt_path(tool)
     should_write_installed = bool(prompt_path and os.path.exists(prompt_path))
 
-    if tool == 'codex' and _codex_profile_available():
+    if tool == 'codex' and _codex_ctf_config_active():
         from codex_session_patcher.ctf_config.installer import CTFConfigInstaller
         prompt_path = _get_codex_prompt_path_for_file(CTFConfigInstaller.DEFAULT_PROMPT_FILE)
-        _sync_codex_profile_prompt_file(CTFConfigInstaller.DEFAULT_PROMPT_FILE)
+        _sync_codex_developer_instructions(default_prompt)
         should_write_installed = True
 
     # 已安装：更新文件为默认
