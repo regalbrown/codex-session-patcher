@@ -54,3 +54,4 @@ htmlcov/
 node_modules/
 web-logs/
 docs/plans/
+.wrangler/

@@ -74,13 +74,13 @@
             <n-tabs type="segment" size="small" v-model:value="sponsorTab">
               <n-tab-pane name="wechat" tab="微信赞赏">
                 <div style="text-align: center; padding: 12px 0">
-                  <img src="/qr-sponsor-wechat.png" alt="微信收款码" style="width: 200px; height: 200px; border-radius: 8px" />
-                  <div style="margin-top: 12px; font-size: 13px; opacity: 0.7">感谢支持！🙏</div>
+                  <img src="/qr-sponsor-wechat.png" alt="微信收款码" class="sponsor-qr sponsor-qr-square" />
+                  <div class="sponsor-note">感谢支持！</div>
                 </div>
               </n-tab-pane>
               <n-tab-pane name="crypto" tab="USDC (Arbitrum)">
                 <div style="text-align: center; padding: 12px 0">
-                  <img src="/qr-sponsor-crypto.png" alt="USDC 收款码" style="width: 200px; height: 200px; border-radius: 8px" />
+                  <img src="/qr-sponsor-crypto.png" alt="USDC 收款码" class="sponsor-qr sponsor-qr-wide" />
                   <div style="margin-top: 12px">
                     <n-text style="font-size: 11px; font-family: monospace; word-break: break-all; opacity: 0.8">
                       0xAeEBb76262D5D452Aa0D4b19E193Dd2402397d02
@@ -88,6 +88,9 @@
                   </div>
                   <n-button size="small" style="margin-top: 8px" @click="copyWalletAddr">复制地址</n-button>
                 </div>
+              </n-tab-pane>
+              <n-tab-pane name="records" :tab="$t('sponsor.records')">
+                <n-empty :description="$t('sponsor.noRecords')" style="padding: 20px 0" />
               </n-tab-pane>
             </n-tabs>
           </n-modal>
@@ -118,6 +121,12 @@
               <n-icon><HelpCircleOutline /></n-icon>
             </template>
             {{ $t('nav.help') }}
+          </n-tab>
+          <n-tab name="cooperation">
+            <template #icon>
+              <n-icon><ChatbubblesOutline /></n-icon>
+            </template>
+            {{ $t('nav.cooperation') }}
           </n-tab>
         </n-tabs>
 
@@ -157,6 +166,7 @@
           <PromptEnhancePanel v-if="activeTab === 'enhance'" />
           <SettingsPanel v-if="activeTab === 'settings'" />
           <HelpPanel v-if="activeTab === 'help'" />
+          <CooperationPanel v-if="activeTab === 'cooperation'" />
         </n-layout-content>
 
         <!-- 底部日志面板 -->
@@ -171,7 +181,7 @@
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { darkTheme, zhCN, dateZhCN, enUS, dateEnUS, NDialogProvider } from 'naive-ui'
-import { SettingsOutline, MenuOutline, ListOutline, SparklesOutline, HelpCircleOutline } from '@vicons/ionicons5'
+import { SettingsOutline, MenuOutline, ListOutline, SparklesOutline, HelpCircleOutline, ChatbubblesOutline } from '@vicons/ionicons5'
 import SessionList from './components/SessionList.vue'
 import PreviewPanel from './components/PreviewPanel.vue'
 import ActionBar from './components/ActionBar.vue'
@@ -179,6 +189,7 @@ import LogPanel from './components/LogPanel.vue'
 import PromptEnhancePanel from './components/PromptEnhancePanel.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import HelpPanel from './components/HelpPanel.vue'
+import CooperationPanel from './components/CooperationPanel.vue'
 import LocaleSwitch from './components/LocaleSwitch.vue'
 import { useSessionStore } from './stores/sessionStore'
 import { useSettingsStore } from './stores/settingsStore'
@@ -381,6 +392,29 @@ onUnmounted(() => {
 
 .sponsor-btn {
   font-size: 12px;
+}
+
+.sponsor-qr {
+  display: block;
+  margin: 0 auto;
+  border-radius: var(--radius-md);
+}
+
+.sponsor-qr-square {
+  width: 200px;
+  height: auto;
+}
+
+.sponsor-qr-wide {
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+}
+
+.sponsor-note {
+  margin-top: 12px;
+  color: var(--color-text-3);
+  font-size: 13px;
 }
 
 @media (max-width: 600px) {

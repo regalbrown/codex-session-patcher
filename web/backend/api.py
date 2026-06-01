@@ -12,7 +12,8 @@ import shutil
 from datetime import datetime
 from typing import Optional
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+import httpx
+from fastapi import APIRouter, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 import time as _time
@@ -22,7 +23,7 @@ from .schemas import (
     PatchResponse, Settings, ChangeDetail, ChangeType, WSMessage,
     AIRewriteResponse, PatchRequest, BackupInfo, RestoreResponse, DiffItem,
     CTFStatusResponse, CTFInstallResponse, PromptRewriteRequest, PromptRewriteResponse,
-    ConversationTurn, CTFInstallRequest,
+    ConversationTurn, CTFInstallRequest, CooperationIntentRequest, CooperationIntentResponse,
 )
 
 from codex_session_patcher.core import (
@@ -50,11 +51,68 @@ DEFAULT_CLAUDE_SESSION_DIR = os.path.expanduser("~/.claude/projects/")
 DEFAULT_MEMORY_FILE = os.path.expanduser("~/.codex/memories/MEMORY.md")
 DEFAULT_CONFIG_FILE = os.path.expanduser("~/.codex-patcher/config.json")
 
+COOPERATION_TYPE_LABELS = {
+    "ads": "广告位出租",
+    "development": "项目开发合作",
+    "token_supply": "AI 中转站 Token 批发供应",
+    "other": "其他",
+}
+
+DEFAULT_MUGGLE_LEADS_ENDPOINT = "https://leads.3jiezhiwai.com/api/sources/codex-session-patcher/intents"
+
 
 @router.get("/version")
 async def get_version():
     """返回当前应用版本。"""
     return {"version": __version__}
+
+
+def _build_cooperation_payload(body: CooperationIntentRequest, client_host: str) -> dict:
+    return {
+        "source_id": os.environ.get("MUGGLE_LEADS_SOURCE_ID", "codex-session-patcher").strip() or "codex-session-patcher",
+        "source_name": os.environ.get("MUGGLE_LEADS_SOURCE_NAME", "Codex Session Patcher").strip() or "Codex Session Patcher",
+        "source_version": __version__,
+        "intent_type": body.intent_type,
+        "intent_type_label": COOPERATION_TYPE_LABELS.get(body.intent_type, body.intent_type),
+        "name": body.name,
+        "contact": body.contact,
+        "message": body.message,
+        "client": client_host,
+    }
+
+
+async def _submit_to_muggle_leads(payload: dict):
+    endpoint = os.environ.get("MUGGLE_LEADS_ENDPOINT", DEFAULT_MUGGLE_LEADS_ENDPOINT).strip()
+    if not endpoint:
+        raise HTTPException(
+            status_code=503,
+            detail="合作意向提交地址未配置，请直接通过 QQ / 微信 / TG 联系",
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(endpoint, json=payload)
+    except httpx.RequestError as exc:
+        logger.warning("提交合作意向到 Muggle Leads 失败", exc_info=True)
+        raise HTTPException(status_code=502, detail="提交失败，请直接通过 QQ / 微信 / TG 联系") from exc
+
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail="提交失败，请直接通过 QQ / 微信 / TG 联系") from exc
+
+    if response.status_code >= 400 or data.get("success") is not True:
+        detail = data.get("message") or data.get("detail") or "提交失败，请直接通过 QQ / 微信 / TG 联系"
+        logger.warning("Muggle Leads 返回提交失败: %s %s", response.status_code, data)
+        raise HTTPException(status_code=502, detail=detail)
+
+
+@router.post("/cooperation/intent", response_model=CooperationIntentResponse)
+async def submit_cooperation_intent(body: CooperationIntentRequest, request: Request):
+    """提交合作意向到远程 Muggle Leads 服务。"""
+    client_host = request.client.host if request.client else "unknown"
+    await _submit_to_muggle_leads(_build_cooperation_payload(body, client_host))
+    return CooperationIntentResponse(success=True, message="已提交，我会尽快联系你。")
 
 
 # ─── WebSocket 连接管理 ──────────────────────────────────────────────────────

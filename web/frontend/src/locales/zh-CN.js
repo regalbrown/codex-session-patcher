@@ -33,6 +33,7 @@ export default {
     enhance: 'CTF/渗透模式',
     settings: '设置',
     help: '帮助',
+    cooperation: '合作',
   },
 
   // 会话
@@ -110,6 +111,43 @@ export default {
     backupCreated: '已创建备份',
     noBackup: '没有可用的备份',
     selectBackup: '选择备份',
+  },
+
+  // 打赏
+  sponsor: {
+    records: '打赏记录',
+    noRecords: '暂无公开支持记录，欢迎成为第一位支持者。',
+  },
+
+  // 合作
+  cooperation: {
+    adsTitle: '广告位出租',
+    adsDesc: '页面宽屏两侧空白区域可合作投放广告，适合开发者工具、AI 服务、安全课程、云服务等产品。第一版先开放合作联系，实际广告位按合作内容单独确认。',
+    adsTags: ['开发者工具', 'AI 服务', '安全课程', '云服务'],
+    devTitle: '项目开发合作',
+    devDesc: '可以合作开发面向真实工作流的小工具和自动化系统，优先做清晰、可维护、能落地的项目。',
+    devItems: ['AI 工具和 Agent 工作流', '自动化脚本和数据处理工具', 'Web 工具、浏览器插件和内部效率系统'],
+    tokenTitle: 'AI 中转站 Token 批发供应',
+    tokenDesc: '提供 AI 中转站 Token 批发供应合作，适合需要稳定 API 消耗、团队额度或渠道合作的场景。',
+    intentTitle: '提交合作意向',
+    intentType: '合作类型',
+    intentTypeAds: '广告位出租',
+    intentTypeDevelopment: '项目开发合作',
+    intentTypeToken: 'AI 中转站 Token 批发供应',
+    intentTypeOther: '其他',
+    name: '称呼',
+    namePlaceholder: '怎么称呼你',
+    contact: '联系方式',
+    contactPlaceholder: 'QQ / 微信 / TG / 邮箱均可',
+    message: '合作需求',
+    messagePlaceholder: '简单说一下你想合作的内容',
+    submit: '提交合作意向',
+    submitDone: '已提交，我会尽快联系你。',
+    submitFallback: '提交失败，请直接通过 QQ / 微信 / TG 联系。',
+    contactTitle: '联系方式',
+    wechat: '微信',
+    tgName: '麻瓜社区',
+    wechatCopied: '微信号已复制：zyf_code',
   },
 
   // 提示词增强

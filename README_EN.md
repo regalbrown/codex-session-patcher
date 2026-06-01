@@ -78,6 +78,16 @@ The Web UI launchers `./scripts/start-web.sh` and `./scripts/dev-web.sh` also au
 If you really need a manual editable install, run `-m pip install -e ...` with whatever Python 3.8+ launcher already exists on your machine; on Windows that is often `py -3`, while other environments may use `python3.12`, `python3`, or `python`.
 On Windows Git Bash / MSYS / MINGW / Cygwin, the project launch scripts automatically set `PYTHONIOENCODING=utf-8` for Python child processes to reduce question-mark mojibake from GBK console encoding in local AI proxies or the Web backend.
 
+Cooperation-intent form submissions from the Web UI cooperation page are sent to the author's hosted Muggle Leads service (`https://leads.3jiezhiwai.com`). Local users do not need to deploy Cloudflare or configure a submission endpoint.
+
+If you fork this project and want submissions to go to your own service, override the remote endpoint before starting the Web service:
+
+```bash
+export MUGGLE_LEADS_ENDPOINT="https://your-worker-domain/api/sources/codex-session-patcher/intents"
+```
+
+Telegram Bot tokens and admin secrets are configured only in the author's hosted Cloudflare Worker, never in the local tool or frontend code.
+
 ---
 
 ## Usage

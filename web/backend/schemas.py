@@ -245,3 +245,63 @@ class PromptRewriteResponse(BaseModel):
     rewritten: Optional[str] = None
     strategy: str = "ctf"
     error: Optional[str] = None
+
+
+class CooperationIntentRequest(BaseModel):
+    """合作意向提交请求"""
+    intent_type: str
+    name: str
+    contact: str
+    message: str
+    source: str = "web"
+
+    @field_validator("intent_type")
+    @classmethod
+    def _validate_intent_type(cls, value: str) -> str:
+        cleaned = (value or "").strip()
+        allowed = {"ads", "development", "token_supply", "other"}
+        if cleaned not in allowed:
+            raise ValueError("合作类型无效")
+        return cleaned
+
+    @field_validator("name")
+    @classmethod
+    def _validate_name(cls, value: str) -> str:
+        cleaned = (value or "").strip()
+        if not cleaned:
+            raise ValueError("称呼不能为空")
+        if len(cleaned) > 80:
+            raise ValueError("称呼不能超过 80 个字符")
+        return cleaned
+
+    @field_validator("contact")
+    @classmethod
+    def _validate_contact(cls, value: str) -> str:
+        cleaned = (value or "").strip()
+        if not cleaned:
+            raise ValueError("联系方式不能为空")
+        if len(cleaned) > 120:
+            raise ValueError("联系方式不能超过 120 个字符")
+        return cleaned
+
+    @field_validator("message")
+    @classmethod
+    def _validate_message(cls, value: str) -> str:
+        cleaned = (value or "").strip()
+        if len(cleaned) < 5:
+            raise ValueError("合作需求不能少于 5 个字符")
+        if len(cleaned) > 1000:
+            raise ValueError("合作需求不能超过 1000 个字符")
+        return cleaned
+
+    @field_validator("source")
+    @classmethod
+    def _validate_source(cls, value: str) -> str:
+        cleaned = (value or "web").strip() or "web"
+        return cleaned[:50]
+
+
+class CooperationIntentResponse(BaseModel):
+    """合作意向提交响应"""
+    success: bool
+    message: str
