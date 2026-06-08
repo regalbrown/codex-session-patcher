@@ -58,13 +58,19 @@ npx wrangler secret put ADMIN_TOKEN
 npx wrangler secret put IP_HASH_SALT
 ```
 
-5. 部署。
+5. 创建广告图片用的 R2 bucket。
+
+```bash
+npx wrangler r2 bucket create muggle-leads-ad-assets
+```
+
+6. 部署。
 
 ```bash
 npm run deploy
 ```
 
-6. 在 fork 项目或开发环境中覆盖远程提交地址。
+7. 在 fork 项目或开发环境中覆盖远程提交地址。
 
 ```bash
 export MUGGLE_LEADS_ENDPOINT="https://你的 Worker 域名/api/sources/codex-session-patcher/intents"
@@ -72,38 +78,21 @@ export MUGGLE_LEADS_ENDPOINT="https://你的 Worker 域名/api/sources/codex-ses
 
 官方版 Codex Session Patcher 已内置作者自己的线上提交地址，普通用户不需要配置这个环境变量。
 
-## 广告位配置
+## 广告位管理
 
-Codex Session Patcher 的广告位由作者部署的 Worker 控制，不由本地用户配置。前端默认读取：
+Codex Session Patcher 的广告位由作者部署的 Worker 控制，不由本地用户配置。打开管理后台后进入“广告位”，选择页面和左右位置，上传图片，填写点击链接、尺寸和比例后保存。
+
+```text
+https://leads.3jiezhiwai.com/admin
+```
+
+后台会把广告位元数据保存到 D1，上传的图片保存到 R2。前端默认读取公开接口：
 
 ```text
 https://leads.3jiezhiwai.com/api/sources/codex-session-patcher/ad-slots
 ```
 
-在 Cloudflare Worker 的环境变量里配置 `CODEX_SESSION_PATCHER_AD_SLOTS_JSON`，内容示例：
-
-```json
-{
-  "version": 1,
-  "slots": [
-    {
-      "tab": "enhance",
-      "position": "left",
-      "enabled": true,
-      "image_url": "https://cdn.example.com/ad.png",
-      "click_url": "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=915358515&card_type=group&source=qrcode",
-      "alt": "广告图",
-      "title": "点击加入 QQ 群",
-      "width": "clamp(190px, 17vw, 320px)",
-      "max_height": "72vh",
-      "fit": "natural",
-      "background": "var(--color-bg-1)"
-    }
-  ]
-}
-```
-
-更换广告图、点击链接、尺寸或比例时，只修改这个环境变量。`image_url` 建议使用作者控制的 CDN、R2 或对象存储地址。
+如果已经有 CDN、R2 或对象存储图片地址，也可以不上传图片，直接在后台填写图片地址。
 
 ## 管理后台
 
