@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "slots": [
+    {
+      "tab": "enhance",
+      "position": "left",
+      "enabled": true,
+      "image_url": "/ad-gpt-gaokao.png",
+      "click_url": "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=915358515&card_type=group&source=qrcode",
+      "alt": "GPT 高考三天免费广告",
+      "title": "点击加入 QQ 群",
+      "width": "clamp(190px, 17vw, 320px)",
+      "max_height": "72vh",
+      "fit": "natural",
+      "background": "var(--color-bg-1)"
+    },
+    {
+      "tab": "enhance",
+      "position": "right",
+      "enabled": true,
+      "image_url": "/ad-gpt-gaokao.png",
+      "click_url": "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=915358515&card_type=group&source=qrcode",
+      "alt": "GPT 高考三天免费广告",
+      "title": "点击加入 QQ 群",
+      "width": "clamp(190px, 17vw, 320px)",
+      "max_height": "72vh",
+      "fit": "natural",
+      "background": "var(--color-bg-1)"
+    },
+    {
+      "tab": "settings",
+      "position": "left",
+      "enabled": true,
+      "image_url": "/ad-gpt-gaokao.png",
+      "click_url": "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=915358515&card_type=group&source=qrcode",
+      "alt": "GPT 高考三天免费广告",
+      "title": "点击加入 QQ 群",
+      "width": "clamp(190px, 17vw, 320px)",
+      "max_height": "72vh",
+      "fit": "natural",
+      "background": "var(--color-bg-1)"
+    },
+    {
+      "tab": "settings",
+      "position": "right",
+      "enabled": true,
+      "image_url": "/ad-gpt-gaokao.png",
+      "click_url": "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=915358515&card_type=group&source=qrcode",
+      "alt": "GPT 高考三天免费广告",
+      "title": "点击加入 QQ 群",
+      "width": "clamp(190px, 17vw, 320px)",
+      "max_height": "72vh",
+      "fit": "natural",
+      "background": "var(--color-bg-1)"
+    },
+    {
+      "tab": "help",
+      "position": "left",
+      "enabled": true,
+      "image_url": "/ad-gpt-gaokao.png",
+      "click_url": "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=915358515&card_type=group&source=qrcode",
+      "alt": "GPT 高考三天免费广告",
+      "title": "点击加入 QQ 群",
+      "width": "clamp(190px, 17vw, 320px)",
+      "max_height": "72vh",
+      "fit": "natural",
+      "background": "var(--color-bg-1)"
+    },
+    {
+      "tab": "help",
+      "position": "right",
+      "enabled": true,
+      "image_url": "/ad-gpt-gaokao.png",
+      "click_url": "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=915358515&card_type=group&source=qrcode",
+      "alt": "GPT 高考三天免费广告",
+      "title": "点击加入 QQ 群",
+      "width": "clamp(190px, 17vw, 320px)",
+      "max_height": "72vh",
+      "fit": "natural",
+      "background": "var(--color-bg-1)"
+    },
+    {
+      "tab": "cooperation",
+      "position": "left",
+      "enabled": true,
+      "image_url": "/ad-gpt-gaokao.png",
+      "click_url": "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=915358515&card_type=group&source=qrcode",
+      "alt": "GPT 高考三天免费广告",
+      "title": "点击加入 QQ 群",
+      "width": "clamp(190px, 17vw, 320px)",
+      "max_height": "72vh",
+      "fit": "natural",
+      "background": "var(--color-bg-1)"
+    },
+    {
+      "tab": "cooperation",
+      "position": "right",
+      "enabled": true,
+      "image_url": "/ad-gpt-gaokao.png",
+      "click_url": "mqqapi://card/show_pslcard?src_type=internal&version=1&uin=915358515&card_type=group&source=qrcode",
+      "alt": "GPT 高考三天免费广告",
+      "title": "点击加入 QQ 群",
+      "width": "clamp(190px, 17vw, 320px)",
+      "max_height": "72vh",
+      "fit": "natural",
+      "background": "var(--color-bg-1)"
+    }
+  ]
+}

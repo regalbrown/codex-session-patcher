@@ -163,10 +163,54 @@
 
         <!-- 其他 Tab 内容 -->
         <n-layout-content v-show="activeTab !== 'sessions'" class="tab-content">
-          <PromptEnhancePanel v-if="activeTab === 'enhance'" />
-          <SettingsPanel v-if="activeTab === 'settings'" />
-          <HelpPanel v-if="activeTab === 'help'" />
-          <CooperationPanel v-if="activeTab === 'cooperation'" />
+          <div
+            v-if="activeTab === 'enhance'"
+            class="ad-layout"
+            :class="{ 'ad-layout-empty': !hasAdsForTab('enhance') }"
+            :style="getAdLayoutStyle('enhance')"
+          >
+            <AdSlot :slot="getAdSlot('enhance', 'left')" />
+            <main class="ad-layout-main">
+              <PromptEnhancePanel />
+            </main>
+            <AdSlot :slot="getAdSlot('enhance', 'right')" />
+          </div>
+          <div
+            v-if="activeTab === 'settings'"
+            class="ad-layout"
+            :class="{ 'ad-layout-empty': !hasAdsForTab('settings') }"
+            :style="getAdLayoutStyle('settings')"
+          >
+            <AdSlot :slot="getAdSlot('settings', 'left')" />
+            <main class="ad-layout-main">
+              <SettingsPanel />
+            </main>
+            <AdSlot :slot="getAdSlot('settings', 'right')" />
+          </div>
+          <div
+            v-if="activeTab === 'help'"
+            class="ad-layout"
+            :class="{ 'ad-layout-empty': !hasAdsForTab('help') }"
+            :style="getAdLayoutStyle('help')"
+          >
+            <AdSlot :slot="getAdSlot('help', 'left')" />
+            <main class="ad-layout-main">
+              <HelpPanel />
+            </main>
+            <AdSlot :slot="getAdSlot('help', 'right')" />
+          </div>
+          <div
+            v-if="activeTab === 'cooperation'"
+            class="ad-layout"
+            :class="{ 'ad-layout-empty': !hasAdsForTab('cooperation') }"
+            :style="getAdLayoutStyle('cooperation')"
+          >
+            <AdSlot :slot="getAdSlot('cooperation', 'left')" />
+            <main class="ad-layout-main">
+              <CooperationPanel />
+            </main>
+            <AdSlot :slot="getAdSlot('cooperation', 'right')" />
+          </div>
         </n-layout-content>
 
         <!-- 底部日志面板 -->
@@ -191,11 +235,20 @@ import SettingsPanel from './components/SettingsPanel.vue'
 import HelpPanel from './components/HelpPanel.vue'
 import CooperationPanel from './components/CooperationPanel.vue'
 import LocaleSwitch from './components/LocaleSwitch.vue'
+import AdSlot from './components/AdSlot.vue'
 import { useSessionStore } from './stores/sessionStore'
 import { useSettingsStore } from './stores/settingsStore'
 import { useLogStore } from './stores/logStore'
 import { useLocaleStore } from './stores/localeStore'
 import { api } from './services/api'
+
+const AD_TABS = ['enhance', 'settings', 'help', 'cooperation']
+const AD_POSITIONS = ['left', 'right']
+const AD_FITS = ['natural', 'contain', 'cover', 'fill']
+const DEFAULT_AD_WIDTH = 'clamp(190px, 17vw, 320px)'
+const DEFAULT_AD_MAX_HEIGHT = '72vh'
+const DEFAULT_AD_BACKGROUND = 'var(--color-bg-1)'
+const AD_CONFIG_URL = import.meta.env.VITE_AD_CONFIG_URL || '/ad-slots.json'
 
 const { t } = useI18n()
 const activeTab = ref('enhance')
@@ -206,6 +259,7 @@ const sponsorTab = ref('wechat')
 const previewPanelRef = ref(null)
 const cleanReasoning = ref(true)  // 是否清理推理内容
 const appVersion = ref('')
+const adSlots = ref([])
 
 async function copyWalletAddr() {
   try {
@@ -225,6 +279,135 @@ const naiveLocale = computed(() => {
 const naiveDateLocale = computed(() => {
   return localeStore.currentLocale === 'en-US' ? dateEnUS : dateZhCN
 })
+
+const adSlotMap = computed(() => {
+  return new Map(adSlots.value.map(slot => [`${slot.tab}:${slot.position}`, slot]))
+})
+
+function getAdSlot(tab, position) {
+  return adSlotMap.value.get(`${tab}:${position}`) || null
+}
+
+function hasAdsForTab(tab) {
+  return AD_POSITIONS.some(position => Boolean(getAdSlot(tab, position)))
+}
+
+function getAdLayoutStyle(tab) {
+  return {
+    '--ad-left-width': getAdSlot(tab, 'left')?.width || DEFAULT_AD_WIDTH,
+    '--ad-right-width': getAdSlot(tab, 'right')?.width || DEFAULT_AD_WIDTH
+  }
+}
+
+function normalizeCssLength(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return `${Math.max(80, Math.min(value, 600))}px`
+  }
+
+  if (typeof value !== 'string') {
+    return ''
+  }
+
+  const trimmed = value.trim()
+  const lengthPattern = /^-?\d+(\.\d+)?(px|rem|em|vw|vh|%)$/
+  const clampPattern = /^clamp\(\s*-?\d+(\.\d+)?(px|rem|em|vw|vh|%)\s*,\s*-?\d+(\.\d+)?(px|rem|em|vw|vh|%)\s*,\s*-?\d+(\.\d+)?(px|rem|em|vw|vh|%)\s*\)$/
+
+  return lengthPattern.test(trimmed) || clampPattern.test(trimmed) ? trimmed : ''
+}
+
+function normalizeAdWidth(slot) {
+  const directWidth = normalizeCssLength(slot.width)
+  if (directWidth) {
+    return directWidth
+  }
+
+  const hasResponsiveWidth = slot.width_min || slot.width_vw || slot.width_max
+  if (!hasResponsiveWidth) {
+    return DEFAULT_AD_WIDTH
+  }
+
+  const min = normalizeCssLength(slot.width_min) || '190px'
+  const middle = normalizeCssLength(slot.width_vw) || '17vw'
+  const max = normalizeCssLength(slot.width_max) || '320px'
+  return `clamp(${min}, ${middle}, ${max})`
+}
+
+function normalizeBackground(value) {
+  if (typeof value !== 'string') {
+    return DEFAULT_AD_BACKGROUND
+  }
+
+  const trimmed = value.trim()
+  const colorPattern = /^(#[0-9a-fA-F]{3,8}|rgba?\([\d\s,.%]+\)|hsla?\([\d\s,.%deg]+\)|var\(--[a-zA-Z0-9-]+\)|transparent)$/
+  return colorPattern.test(trimmed) ? trimmed : DEFAULT_AD_BACKGROUND
+}
+
+function normalizeImageUrl(value) {
+  if (typeof value !== 'string') {
+    return ''
+  }
+
+  const trimmed = value.trim()
+  if (/^(https?:)?\/\//i.test(trimmed) || trimmed.startsWith('/')) {
+    return trimmed
+  }
+
+  return ''
+}
+
+function normalizeClickUrl(value) {
+  if (typeof value !== 'string') {
+    return ''
+  }
+
+  const trimmed = value.trim()
+  if (/^(https?:\/\/|mqqapi:\/\/|\/)/i.test(trimmed)) {
+    return trimmed
+  }
+
+  return ''
+}
+
+function normalizeAdSlot(slot) {
+  if (!slot || slot.enabled === false || !AD_TABS.includes(slot.tab) || !AD_POSITIONS.includes(slot.position)) {
+    return null
+  }
+
+  const imageUrl = normalizeImageUrl(slot.image_url)
+  if (!imageUrl) {
+    return null
+  }
+
+  const fit = AD_FITS.includes(slot.fit) ? slot.fit : 'natural'
+  return {
+    tab: slot.tab,
+    position: slot.position,
+    imageUrl,
+    clickUrl: normalizeClickUrl(slot.click_url),
+    alt: typeof slot.alt === 'string' ? slot.alt.trim() : '',
+    title: typeof slot.title === 'string' ? slot.title.trim() : '',
+    width: normalizeAdWidth(slot),
+    maxHeight: normalizeCssLength(slot.max_height) || DEFAULT_AD_MAX_HEIGHT,
+    fit,
+    background: normalizeBackground(slot.background)
+  }
+}
+
+async function loadAdSlots() {
+  try {
+    const response = await fetch(AD_CONFIG_URL, { cache: 'no-cache' })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    const config = await response.json()
+    const slots = Array.isArray(config?.slots) ? config.slots : []
+    adSlots.value = slots.map(normalizeAdSlot).filter(Boolean)
+  } catch (error) {
+    console.warn('Failed to load ad slots:', error)
+    adSlots.value = []
+  }
+}
 
 // 初始化：加载会话列表
 sessionStore.fetchSessions()
@@ -256,6 +439,7 @@ async function loadAppVersion() {
 onMounted(() => {
   checkMobile()
   loadAppVersion()
+  loadAdSlots()
   window.addEventListener('resize', checkMobile)
 })
 
@@ -472,7 +656,40 @@ onUnmounted(() => {
   overflow: auto;
 }
 
+.ad-layout {
+  max-width: 1500px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: var(--ad-left-width) minmax(0, 1fr) var(--ad-right-width);
+  gap: 16px;
+  align-items: start;
+}
+
+.ad-layout-empty {
+  display: block;
+  max-width: 960px;
+}
+
+.ad-layout-empty :deep(.ad-slot-frame) {
+  display: none;
+}
+
+.ad-layout-main {
+  min-width: 0;
+}
+
 /* 响应式布局 */
+@media (max-width: 1280px) {
+  .ad-layout {
+    display: block;
+    max-width: 960px;
+  }
+
+  .ad-layout :deep(.ad-slot-frame) {
+    display: none;
+  }
+}
+
 @media (max-width: 1024px) {
   .menu-toggle {
     display: flex;
