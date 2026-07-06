@@ -64,12 +64,19 @@
                   </n-tag>
                 </div>
                 <n-text depth="3" style="font-size: 13px; line-height: 1.6">{{ $t('enhance.ctfProfileDesc') }}</n-text>
+                <n-alert type="info" :bordered="false" style="margin-top: 8px">
+                  <div class="app-launch-hint">
+                    <div>{{ $t('enhance.ctfProfileAppHintIntro') }}</div>
+                    <div>{{ $t('enhance.ctfProfileAppHintMac') }}<button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex app .')"><code>codex app .</code></button></div>
+                    <div>{{ $t('enhance.ctfProfileAppHintWindows') }}<button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex app .')"><code>codex app .</code></button></div>
+                  </div>
+                </n-alert>
                 <div style="margin-top: 8px">
                   <n-button v-if="!ctfStore.status?.installed" type="primary" size="small" :loading="ctfStore.installLoading" @click="handleInstall">{{ $t('enhance.enable') }}</n-button>
                   <n-button v-else type="warning" size="small" :loading="ctfStore.installLoading" @click="handleUninstall">{{ $t('enhance.disable') }}</n-button>
                 </div>
                 <p v-if="ctfStore.status?.installed" class="command-inline-hint">
-                  {{ $t('enhance.ctfProfileCmdPre') }}<code>codex -p ctf</code>{{ $t('enhance.ctfProfileCmdPost') }}
+                  {{ $t('enhance.ctfProfileCmdPre') }}<button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex -p ctf')"><code>codex -p ctf</code></button>{{ $t('enhance.ctfProfileCmdPost') }}
                 </p>
               </div>
 
@@ -254,7 +261,7 @@
           <n-tab-pane name="codex" tab="Codex">
             <n-steps vertical :current="0" size="small" style="margin-top: 12px">
               <n-step :title="$t('help.workflowCtfSteps[0]')" :description="$t('enhance.ctfProfileDesc')" />
-              <n-step :title="$t('help.workflowCtfSteps[1]')" description="Profile: codex -p ctf; Global: codex" />
+              <n-step :title="$t('help.workflowCtfSteps[1]')" :description="$t('enhance.ctfWorkflowLaunchDesc')" />
               <n-step :title="$t('help.workflowCtfSteps[2]')" :description="$t('enhance.promptRewriteDesc')" />
               <n-step :title="$t('help.workflowCtfSteps[3]')" :description="$t('help.workflowCtfSteps[4]')" />
             </n-steps>
@@ -564,13 +571,38 @@ async function handleRewrite() {
   }
 }
 
-async function copyRewritten() {
+async function writeClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.left = '-9999px'
+  document.body.appendChild(textarea)
+  textarea.select()
+
   try {
-    await navigator.clipboard.writeText(ctfStore.rewrittenRequest)
+    if (!document.execCommand('copy')) throw new Error('copy failed')
+  } finally {
+    document.body.removeChild(textarea)
+  }
+}
+
+async function copyCommand(command) {
+  try {
+    await writeClipboard(command)
     message.success(t('common.copied'))
   } catch {
     message.error(t('common.error'))
   }
+}
+
+async function copyRewritten() {
+  await copyCommand(ctfStore.rewrittenRequest)
 }
 
 function clearRewrite() {
@@ -617,6 +649,35 @@ code {
   font-size: 13px;
   color: var(--n-text-color-3);
   line-height: 1.6;
+}
+
+.copy-command {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.copy-command code {
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.copy-command:hover code,
+.copy-command:focus-visible code {
+  background: rgba(99, 226, 183, 0.18);
+  box-shadow: 0 0 0 1px rgba(99, 226, 183, 0.45);
+}
+
+.copy-command:focus-visible {
+  outline: none;
+}
+
+.app-launch-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .template-row {

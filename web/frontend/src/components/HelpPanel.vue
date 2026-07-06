@@ -4,7 +4,7 @@
       <!-- 项目介绍 -->
       <n-card title="Codex Session Patcher" size="small">
         <n-space vertical>
-          <p>一个帮助你在安全测试场景下更顺畅使用 Codex CLI 的工具集。</p>
+          <p>一个帮助你在安全测试场景下更顺畅使用 Codex CLI 和 Codex App 的工具集。</p>
           <n-ul>
             <n-li><strong>CTF/渗透模式</strong>：注入安全测试上下文，降低被拒绝概率</n-li>
             <n-li><strong>提示词改写</strong>：将敏感请求改写为更易接受的形式</n-li>
@@ -46,7 +46,7 @@
       <n-card title="CTF/渗透模式对普通任务的影响" size="small">
         <n-space vertical>
           <n-alert type="info" :bordered="false">
-            提供两种模式：<strong>Profile 模式</strong>仅对指定会话生效，<strong>全局模式</strong>对所有新会话生效。
+            提供两种模式：<strong>Profile 模式</strong>只适用于 CLI 指定会话，<strong>全局模式</strong>对新的 CLI 和 Codex App 会话生效。
           </n-alert>
 
           <n-h4>两种模式对比</n-h4>
@@ -62,15 +62,15 @@
             <tbody>
               <tr>
                 <td><n-tag type="info" size="small">Profile</n-tag></td>
-                <td>仅当前会话</td>
-                <td><code>codex -p ctf</code></td>
+                <td>仅 Profile 启动的 CLI 会话</td>
+                <td>CLI：<button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex -p ctf')"><code>codex -p ctf</code></button><br />App：不支持临时 Profile</td>
                 <td>偶尔打 CTF</td>
               </tr>
               <tr>
                 <td><n-tag type="warning" size="small">全局</n-tag></td>
-                <td>所有新会话</td>
-                <td>点击「全局启用」</td>
-                <td>持续安全测试</td>
+                <td>新的 CLI 和 Codex App 会话</td>
+                <td>启用后 CLI：<button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex')"><code>codex</code></button><br />App：macOS 终端 / Windows PowerShell 或 CMD：<button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex app .')"><code>codex app .</code></button></td>
+                <td>App 使用或持续安全测试</td>
               </tr>
             </tbody>
           </n-table>
@@ -84,7 +84,8 @@
 
           <n-h4>建议</n-h4>
           <n-ul>
-            <n-li>偶尔打 CTF：使用 <code>codex -p ctf</code></n-li>
+            <n-li>CLI 偶尔打 CTF：使用 <button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex -p ctf')"><code>codex -p ctf</code></button></n-li>
+            <n-li>Codex App 使用渗透模式：先启用全局模式，再从项目目录启动。macOS 终端和 Windows PowerShell/CMD 都运行 <button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex app .')"><code>codex app .</code></button></n-li>
             <n-li>持续安全测试：启用全局模式，结束后禁用</n-li>
             <n-li>日常开发：禁用全局模式即可</n-li>
           </n-ul>
@@ -100,7 +101,7 @@
                 在「提示词增强」页面点击启用
               </n-step>
               <n-step title="新开会话">
-                使用命令 <code>codex -p ctf</code>
+                CLI 使用 <button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex -p ctf')"><code>codex -p ctf</code></button>；如果用 Codex App，请先启用全局模式，再从项目目录运行 <button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex app .')"><code>codex app .</code></button>（macOS 终端、Windows PowerShell/CMD 通用）
               </n-step>
               <n-step title="发送请求">
                 如果被拒绝，使用提示词改写器
@@ -109,7 +110,7 @@
                 如果仍被拒绝，使用会话清理功能
               </n-step>
               <n-step title="继续对话">
-                使用 <code>codex resume</code> 继续
+                使用 <button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex resume')"><code>codex resume</code></button> 继续
               </n-step>
             </n-steps>
           </n-tab-pane>
@@ -120,7 +121,7 @@
                 或使用后及时禁用
               </n-step>
               <n-step title="正常使用">
-                直接运行 <code>codex</code>，不加 -p 参数
+                直接运行 <button class="copy-command" type="button" :title="$t('common.copy')" :aria-label="$t('common.copy')" @click="copyCommand('codex')"><code>codex</code></button>，不加 -p 参数
               </n-step>
             </n-steps>
           </n-tab-pane>
@@ -142,6 +143,41 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+import { useMessage } from 'naive-ui'
+
+const { t } = useI18n()
+const message = useMessage()
+
+async function writeClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.left = '-9999px'
+  document.body.appendChild(textarea)
+  textarea.select()
+
+  try {
+    if (!document.execCommand('copy')) throw new Error('copy failed')
+  } finally {
+    document.body.removeChild(textarea)
+  }
+}
+
+async function copyCommand(command) {
+  try {
+    await writeClipboard(command)
+    message.success(t('common.copied'))
+  } catch {
+    message.error(t('common.error'))
+  }
+}
 </script>
 
 <style scoped>
@@ -159,6 +195,29 @@ code {
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 12px;
+}
+
+.copy-command {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.copy-command code {
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.copy-command:hover code,
+.copy-command:focus-visible code {
+  background: rgba(99, 226, 183, 0.18);
+  box-shadow: 0 0 0 1px rgba(99, 226, 183, 0.45);
+}
+
+.copy-command:focus-visible {
+  outline: none;
 }
 
 p {
